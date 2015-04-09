@@ -12,7 +12,7 @@ PYTHON = python
 
 IMPLS = bash c clojure coffee cpp cs erlang factor forth go haskell java \
 	julia js lua make mal ocaml matlab miniMAL nim perl php ps \
-	python r racket ruby rust scala swift vb guile
+	python r racket ruby dima rust scala swift vb guile
 
 step0 = step0_repl
 step1 = step1_read_print
@@ -40,6 +40,7 @@ EXCLUDE_TESTS += test^go^step5   # test completes, even at 100,000
 EXCLUDE_TESTS += test^php^step5  # test completes, even at 100,000
 EXCLUDE_TESTS += test^racket^step5 # test completes
 EXCLUDE_TESTS += test^ruby^step5 # test completes, even at 100,000
+EXCLUDE_TESTS += test^dima^step5 # test completes, even at 100,000
 EXCLUDE_TESTS += test^rust^step5 # no catching stack overflows
 EXCLUDE_TESTS += test^ocaml^step5 # test completes, even at 1,000,000
 EXCLUDE_TESTS += test^vb^step5   # completes at 10,000
@@ -80,6 +81,8 @@ python_STEP_TO_PROG =  python/$($(1)).py
 r_STEP_TO_PROG =       r/$($(1)).r
 racket_STEP_TO_PROG =  racket/$($(1)).rkt
 ruby_STEP_TO_PROG =    ruby/$($(1)).rb
+ruby_STEP_TO_PROG =    ruby/$($(1)).rb
+dima_STEP_TO_PROG =    dima/$($(1)).rb
 rust_STEP_TO_PROG =    rust/target/release/$($(1))
 scala_STEP_TO_PROG =   scala/$($(1)).scala
 swift_STEP_TO_PROG =   swift/$($(1))
@@ -121,6 +124,7 @@ python_RUNSTEP =  $(PYTHON) ../$(2) $(3)
 r_RUNSTEP =       Rscript ../$(2) $(3)
 racket_RUNSTEP =  ../$(2) $(3)
 ruby_RUNSTEP =    ruby ../$(2) $(3)
+dima_RUNSTEP =    ruby ../$(2) $(3)
 rust_RUNSTEP =    ../$(2) $(3)
 scala_RUNSTEP =   sbt 'run-main $($(1))$(if $(3), $(3),)'
 swift_RUNSTEP =   ../$(2) $(3)
