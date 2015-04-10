@@ -2,8 +2,11 @@ class Env
   attr_accessor :data
   attr_accessor :outer
 
-  def initialize(data = {}, outer = nil)
+  def initialize(data = {}, outer = nil, binds = [], exprs = [])
     @data, @outer = data, outer
+    binds.each_index do |i|
+      @data[binds[i]] = exprs[i]
+    end
   end
 
   def set(k, v)

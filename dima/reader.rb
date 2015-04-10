@@ -1,5 +1,4 @@
 require_relative 'types'
-
 TOKENS = /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*)/
 
 class Reader
@@ -29,12 +28,12 @@ def read_str(str)
   read_form Reader.new(tokens)
 end
 
-def read_list(reader)
+def read_list(reader, start = '(', endd = ')')
   reader.next
   val = []
-  while (token = reader.peek) != ')'
+  while (token = reader.peek) != endd
     if token.nil?
-      fail "expected ')', got EOF"
+      fail "expected '#{endd}', got EOF"
     end
     val << read_form(reader)
   end
@@ -44,17 +43,17 @@ end
 
 def read_atom(reader)
   token = reader.next
-  case token[0]
-  when /-?[0-9]+/
-    Mal.new(:number, token.to_i)
-  when /\A".*"\z/
-    Mal.new(:string, token[1..-2].gsub('\n', "\n").gsub('\"', "\""))
+  case token
   when 'nil'
     Mal.new(:nil, nil)
   when 'true'
     Mal.new(:true, true)
   when 'false'
     Mal.new(:false, false)
+  when /\A-?[0-9]+\z/
+    Mal.new(:number, token.to_i)
+  when /\A".*"\z/
+    Mal.new(:string, token[1..-2].gsub('\n', "\n").gsub('\"', "\""))
   else
     Mal.new(:symbol, token.to_s)
   end
@@ -65,6 +64,8 @@ def read_form(reader)
   case token[0]
   when '('
     read_list(reader)
+  when '['
+    read_list(reader, '[', ']')
   else
     read_atom(reader)
   end

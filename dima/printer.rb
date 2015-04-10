@@ -1,13 +1,21 @@
 def pr_str(mal, print_readably = false)
   case mal.type
+  when :function
+    '#<function>'
   when :number
     mal.val.to_s
-  when :nil, :true, :false
+  when :nil
+    'nil'
+  when :true, :false
     mal.val.to_s
   when :symbol
     mal.val.to_s
   when :string
-    mal.val.inspect
+    if print_readably
+      mal.val.inspect
+    else
+      mal.val
+    end
   when :list
     "(" + mal.val.map { |x| pr_str(x) }.join(" ") + ")"
   end
