@@ -1,4 +1,5 @@
 require_relative 'types'
+require_relative 'reader'
 require_relative 'printer'
 require_relative 'env'
 
@@ -48,4 +49,6 @@ NS = Env.new({
   'str' => func { |*args| Mal.new(:string, args.map { |x| pr_str(x, false) }.join('')) },
   'prn' => func { |*args| puts args.map { |x| pr_str(x, true) }.join(' '); Mal.new(:nil, nil) },
   'println' => func { |*args| puts args.map { |x| pr_str(x, false) }.join(' '); Mal.new(:nil, nil) },
+  'read-string' => func { |str| read_str(str.val) },
+  'slurp' => func { |filename| Mal.new(:string, File.binread(filename.val)) },
 })
