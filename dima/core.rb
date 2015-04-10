@@ -51,4 +51,6 @@ NS = Env.new({
   'println' => func { |*args| puts args.map { |x| pr_str(x, false) }.join(' '); Mal.new(:nil, nil) },
   'read-string' => func { |str| read_str(str.val) },
   'slurp' => func { |filename| Mal.new(:string, File.binread(filename.val)) },
+  'cons' => func { |x, list| Mal.new(:list, [x] + list.val) }, # this function takes a list as its second parameter and returns a new list that has the first argument prepended to it.
+  'concat' => func { |*args| Mal.new(:list, args.map { |x| x.val }.flatten || []) }, # this functions takes 0 or more lists as parameters and returns a new list that is a concatenation of all the list parameters.
 })
