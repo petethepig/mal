@@ -47,17 +47,16 @@ def is_pair(ast)
 end
 
 def quasiquote(ast)
-  if is_pair(ast) == false
+  if !is_pair(ast)
     Mal.new(:list, [Mal.new(:symbol, 'quote'), ast])
-  elsif ast.val[0] == 'unquote'
+  elsif ast.val[0].type == :symbol && ast.val[0].val == 'unquote'
     ast.val[1]
   elsif is_pair(ast.val[0]) && ast.val[0].val[0].type == :symbol && ast.val[0].val[0].val == 'splice-unquote'
-    Mal.new(:list, [Mal.new(:symbol, 'concat'), ast.val[0].val[1], quasiquote(Mal.new(:list,ast.val[1..-1]))])
+    Mal.new(:list, [Mal.new(:symbol, 'concat'), ast.val[0].val[1], quasiquote(Mal.new(:list, ast.val[1..-1]))])
   else
-    Mal.new(:list, [Mal.new(:symbol, 'cons'), quasiquote(ast.val[1]), quasiquote(Mal.new(:list, ast.val[1..-1]))])
+    Mal.new(:list, [Mal.new(:symbol, 'cons'), quasiquote(ast.val[0]), quasiquote(Mal.new(:list, ast.val[1..-1]))])
   end
 end
-
 
 def _eval(ast, env)
   while true

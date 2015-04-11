@@ -62,6 +62,19 @@ end
 def read_form(reader)
   token = reader.peek
   case token[0]
+  when "'"
+    reader.next
+    Mal.new(:list, [Mal.new(:symbol, 'quote'), read_form(reader)])
+  when "`"
+    reader.next
+    Mal.new(:list, [Mal.new(:symbol, 'quasiquote'), read_form(reader)])
+  when "~"
+    reader.next
+    if token[1] == '@'
+      Mal.new(:list, [Mal.new(:symbol, 'splice-unquote'), read_form(reader)])
+    else
+      Mal.new(:list, [Mal.new(:symbol, 'unquote'), read_form(reader)])
+    end
   when '('
     read_list(reader)
   when '['
