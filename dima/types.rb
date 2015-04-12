@@ -15,3 +15,11 @@ class MalFunction < Mal
     @type, @val, @ast, @params, @env, @is_macro = :function, val, ast, params, env, is_macro
   end
 end
+
+class MalException < StandardError
+  attr_reader :type
+  attr_reader :val
+  def initialize(val)
+    @type, @val = :exception, val
+  end
+end

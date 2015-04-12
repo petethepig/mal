@@ -38,7 +38,20 @@ def read_list(reader, start = '(', endd = ')', type=:list)
     val << read_form(reader)
   end
   reader.next
-  Mal.new(:list, val)
+  Mal.new(type, val)
+end
+
+def read_map(reader)
+  reader.next
+  val = []
+  while (token = reader.peek) != '}'
+    if token.nil?
+      fail "expected '}', got EOF"
+    end
+    val << read_form(reader)
+  end
+  reader.next
+  Mal.new(:map, val.each_slice(2).map { |a, b| [a.val, [a, b]] }.to_h)
 end
 
 def read_atom(reader)
@@ -54,6 +67,8 @@ def read_atom(reader)
     Mal.new(:number, token.to_i)
   when /\A".*"\z/
     Mal.new(:string, token[1..-2].gsub('\n', "\n").gsub('\"', "\""))
+  when /\A:/
+    Mal.new(:keyword, token.to_s)
   else
     Mal.new(:symbol, token.to_s)
   end
@@ -79,6 +94,8 @@ def read_form(reader)
     read_list(reader)
   when '['
     read_list(reader, '[', ']', :vector)
+  when '{'
+    read_map(reader)
   else
     read_atom(reader)
   end

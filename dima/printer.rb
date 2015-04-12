@@ -10,6 +10,13 @@ def pr_str(mal, print_readably = false)
     mal.val.to_s
   when :symbol
     mal.val.to_s
+  when :keyword
+    mal.val.to_s
+  when :exception
+    pr_str(mal.val, print_readably)
+  when :map
+    str = mal.val.to_a.map {|a, b| [pr_str(b[0], print_readably), pr_str(b[1], print_readably)]}.flatten.join(" ")
+    "{" + str + "}"
   when :string
     if print_readably
       # '"' + mal.val.gsub("\"", '\"').gsub("\n", '\n') + '"'
