@@ -1,7 +1,10 @@
+#!/usr/bin/env ruby
+
 require_relative "reader"
 require_relative "printer"
 require_relative "env"
 require_relative "core"
+require "readline"
 
 def _read(str)
   if str =~ /\Aexit/
@@ -183,21 +186,33 @@ def _print(mal)
 end
 
 def _rep(str)
-  _print(_eval(_read(str), NS))
+  begin 
+    _print(_eval(_read(str), NS))
+  rescue EmptyError => e
+    nil
+  end
 end
 
-NS.set('eval', func { |ast| _eval(ast, NS) })
+def _repl(str)
+  begin
+    a = _rep(str)
+    puts(a) unless a.nil?
+  rescue => e
+    puts "Error: #{e.message}"
+    puts "  " + e.backtrace.join("\n  ")
+  end
+end
 
-_rep("(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \")\")))))")
+# puts ARGV
+NS.set('eval', func { |ast| _eval(ast, NS) })
+NS.set('*ARGV*', Mal.new(:list, ARGV.map { |x| Mal.new(:string, x) }))
+
+_rep "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \")\")))))"
 _rep "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))"
 _rep "(defmacro! or (fn* (& xs) (if (empty? xs) nil (if (= 1 (count xs)) (first xs) `(let* (or_FIXME ~(first xs)) (if or_FIXME or_FIXME (or ~@(rest xs))))))))"
 # _rep "(load-file \"core.mal\")"
+_rep "(map load-file *ARGV*)"
 
-while (print "user> "; line = gets())
-  begin
-    puts _rep(line)
-  rescue => e
-    puts "Error: #{e.message}"
-    puts e.backtrace.join("\n")
-  end
+while line = Readline.readline("user> ", true)
+  _repl(line)
 end

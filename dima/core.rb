@@ -75,6 +75,7 @@ NS = Env.new({
   'dissoc' => func { |map, *args| m = map.val.clone; args.each { |x| m.delete(x.val) }; Mal.new(:map, m) },
   'keys' => func { |map| Mal.new(:list, map.val.values.map{|x| x[0]})},
   'vals' => func { |map| Mal.new(:list, map.val.values.map{|x| x[1]})},
-  'apply' => func { |func, *args| list = args.pop; func.val.call(*(args + list.val))},
-  'map' => func { |func, list| Mal.new(:list, list.val.map { |x| func.val.call(x) })},
+  'apply' => func { |func, *args| list = args.pop; func.val.call(*(args + list.val)) },
+  'map' => func { |func, list| Mal.new(:list, list.val.map { |x| func.val.call(x) }) },
+  'readline' => func { |prompt| Mal.new(:string, Readline.readline(prompt.val, true)) },
 })

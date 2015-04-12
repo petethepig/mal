@@ -1,6 +1,8 @@
 require_relative 'types'
 TOKENS = /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*)/
 
+EmptyError = Class.new(StandardError)
+
 class Reader
   def initialize(tokens)
     @tokens = tokens
@@ -25,6 +27,7 @@ end
 
 def read_str(str)
   tokens = tokenizer(str)
+  fail(EmptyError) if tokens.count == 0
   read_form Reader.new(tokens)
 end
 
@@ -76,6 +79,7 @@ end
 
 def read_form(reader)
   token = reader.peek
+  return Mal.new(:nil, nil) unless token
   case token[0]
   when "'"
     reader.next
