@@ -4,7 +4,7 @@ require_relative 'printer'
 require_relative 'env'
 
 def func(&block)
-  Mal.new(:function, Proc.new(&block))
+  MalFunction.new(Proc.new(&block))
 end
 
 def bool(a)
@@ -51,6 +51,11 @@ NS = Env.new({
   'println' => func { |*args| puts args.map { |x| pr_str(x, false) }.join(' '); Mal.new(:nil, nil) },
   'read-string' => func { |str| read_str(str.val) },
   'slurp' => func { |filename| Mal.new(:string, File.binread(filename.val)) },
-  'cons' => func { |x, list| Mal.new(:list, [x] + list.val) }, # this function takes a list as its second parameter and returns a new list that has the first argument prepended to it.
-  'concat' => func { |*args| Mal.new(:list, args.map { |x| x.val }.flatten || []) }, # this functions takes 0 or more lists as parameters and returns a new list that is a concatenation of all the list parameters.
+  'cons' => func { |x, list| Mal.new(:list, [x] + list.val) },
+  'concat' => func { |*args| Mal.new(:list, args.map { |x| x.val }.flatten || []) },
+  'nth' => func { |list, n| list.val[n.val] || fail('not found') },
+  'first' => func { |list| (list.type == :list && list.val[0]) || Mal.new(:nil, nil) },
+  'rest' => func { |list| Mal.new(:list, list.val[1..-1] || []) },
 })
+
+

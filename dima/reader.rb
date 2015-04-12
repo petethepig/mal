@@ -20,7 +20,7 @@ end
 def tokenizer(str)
   str.scan(TOKENS).map { |x| x[0] }.select do |t|
     t != '' && t[0] != ';'
-  end
+  end #.tap {|x| puts x.inspect}
 end
 
 def read_str(str)
@@ -28,7 +28,7 @@ def read_str(str)
   read_form Reader.new(tokens)
 end
 
-def read_list(reader, start = '(', endd = ')')
+def read_list(reader, start = '(', endd = ')', type=:list)
   reader.next
   val = []
   while (token = reader.peek) != endd
@@ -78,7 +78,7 @@ def read_form(reader)
   when '('
     read_list(reader)
   when '['
-    read_list(reader, '[', ']')
+    read_list(reader, '[', ']', :vector)
   else
     read_atom(reader)
   end

@@ -19,5 +19,7 @@ def pr_str(mal, print_readably = false)
     end
   when :list
     "(" + mal.val.map { |x| pr_str(x, print_readably) }.join(" ") + ")"
+  when :vector
+    "[" + mal.val.map { |x| pr_str(x, print_readably) }.join(" ") + "]"
   end
 end
