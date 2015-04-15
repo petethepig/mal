@@ -31,49 +31,51 @@ def read_str(str)
   read_form Reader.new(tokens)
 end
 
-def read_list(reader, start = '(', endd = ')', type=:list)
+def read_list(reader, start = '(', endd = ')', type=MalList)
   reader.next
-  val = []
+  arr = []
   while (token = reader.peek) != endd
     if token.nil?
       fail "expected '#{endd}', got EOF"
     end
-    val << read_form(reader)
+    arr << read_form(reader)
   end
   reader.next
-  Mal.new(type, val)
+  type.new arr
 end
 
 def read_map(reader)
   reader.next
-  val = []
+  arr = []
   while (token = reader.peek) != '}'
     if token.nil?
       fail "expected '}', got EOF"
     end
-    val << read_form(reader)
+    arr << read_form(reader)
   end
   reader.next
-  Mal.new(:map, val.each_slice(2).map { |a, b| [a.val, [a, b]] }.to_h)
+  MalMap[arr.each_slice(2).map { |a, b| [a, b] }]
 end
 
 def read_atom(reader)
   token = reader.next
   case token
   when 'nil'
-    Mal.new(:nil, nil)
+    nil
   when 'true'
-    Mal.new(:true, true)
+    true
   when 'false'
-    Mal.new(:false, false)
+    false
+  when /\A-?[0-9]+\.[0-9]+\z/
+    token.to_f
   when /\A-?[0-9]+\z/
-    Mal.new(:number, token.to_i)
+    token.to_i
   when /\A".*"\z/
-    Mal.new(:string, token[1..-2].gsub('\n', "\n").gsub('\"', "\""))
+    token[1..-2].gsub('\n', "\n").gsub('\"', "\"")
   when /\A:/
-    Mal.new(:keyword, token.to_s)
+    "\u029e" + token[1..-1]
   else
-    Mal.new(:symbol, token.to_s)
+    token.to_sym
   end
 end
 
@@ -83,21 +85,21 @@ def read_form(reader)
   case token[0]
   when "'"
     reader.next
-    Mal.new(:list, [Mal.new(:symbol, 'quote'), read_form(reader)])
+    [:quote, read_form(reader)]
   when "`"
     reader.next
-    Mal.new(:list, [Mal.new(:symbol, 'quasiquote'), read_form(reader)])
+    [:quasiquote, read_form(reader)]
   when "~"
     reader.next
     if token[1] == '@'
-      Mal.new(:list, [Mal.new(:symbol, 'splice-unquote'), read_form(reader)])
+      [:'splice-unquote', read_form(reader)]
     else
-      Mal.new(:list, [Mal.new(:symbol, 'unquote'), read_form(reader)])
+      [:unquote, read_form(reader)]
     end
   when '('
     read_list(reader)
   when '['
-    read_list(reader, '[', ']', :vector)
+    read_list(reader, '[', ']', MalVector)
   when '{'
     read_map(reader)
   else

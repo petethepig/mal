@@ -14,10 +14,10 @@ def _read(str)
 end
 
 def eval_ast(ast, env)
-  case ast.type
-  when :symbol
-    env.get(ast.val)
-  when :list
+  case ast
+  when Symbol
+    env.get(ast)
+  when Array
     _eval(ast, env)
   else
     ast
@@ -25,9 +25,9 @@ def eval_ast(ast, env)
 end
 
 def is_macro_call(ast, env)
-  if ast.type == :list
-    if (first = ast.val.first) && first.type == :symbol 
-      if env.find(first.val) && (func = env.get(first.val)) && func.type == :function && func.is_macro
+  if ast.is_a?(Array)
+    if (first = ast.first) && first.is_a?(Symbol)
+      if env.find(first) && (func = env.get(first)) && func.is_a?(MalFunction) && func.is_macro
         return true
       end
     end
@@ -37,8 +37,8 @@ end
 
 def macroexpand(ast, env)
   while is_macro_call(ast, env)
-    func = env.get(ast.val.first.val)
-    ast = func.val.call(*ast.val.drop(1))
+    func = env.get(ast.first)
+    ast = func.call(*ast.drop(1))
   end
   ast
 end
@@ -58,9 +58,9 @@ end
 def more_args(names, args)
   if more_index = names.index('&')
     if more_index == 0
-      [Mal.new(:list, args)]
+      MalList.new([args])
     else
-      args[0..more_index - 1] + [Mal.new(:list, args.drop(more_index))]
+      MalList.new(args[0..more_index - 1] + [args.drop(more_index)])
     end
   else
     args
@@ -68,73 +68,73 @@ def more_args(names, args)
 end
 
 def is_pair(ast)
-  ast.type == :list && ast.val.count > 0
+  ast.is_a?(MalList) && ast.count > 0
 end
 
 def quasiquote(ast)
   if !is_pair(ast)
-    Mal.new(:list, [Mal.new(:symbol, 'quote'), ast])
-  elsif ast.val[0].type == :symbol && ast.val[0].val == 'unquote'
-    ast.val[1]
-  elsif is_pair(ast.val[0]) && ast.val[0].val[0].type == :symbol && ast.val[0].val[0].val == 'splice-unquote'
-    Mal.new(:list, [Mal.new(:symbol, 'concat'), ast.val[0].val[1], quasiquote(Mal.new(:list, ast.val.drop(1)))])
+    MalList.new([:quote, ast])
+  elsif ast[0].type == :symbol && ast[0] == :unquote
+    ast[1]
+  elsif is_pair(ast[0]) && ast[0][0].type == :symbol && ast[0][0] == :'splice-unquote'
+    MalList.new([:concat, ast[0][1], quasiquote(MalList.new(ast.drop(1)))])
   else
-    Mal.new(:list, [Mal.new(:symbol, 'cons'), quasiquote(ast.val[0]), quasiquote(Mal.new(:list, ast.val.drop(1)))])
+    MalList.new([:cons, quasiquote(ast[0]), quasiquote(MalList.new(ast.drop(1)))])
   end
 end
 
 def _eval(ast, env)
   while true
-    if ast.type != :list
+    if !ast.is_a?(Array)
       return eval_ast(ast, env)
     else
       # macro stuff
       ast = macroexpand(ast, env)
-      return ast unless ast.type == :list
+      return ast unless ast.is_a?(Array)
       #
 
-      list = ast.val
-      case list.first.val
-      when "def!"
+      list = ast
+      case list.first
+      when :"def!"
         val = eval_ast(list[2], env)
-        env.set(list[1].val, val)
+        env.set(list[1], val)
         return val
-      when "defmacro!"
+      when :"defmacro!"
         val = eval_ast(list[2], env)
         val.is_macro = true
-        env.set(list[1].val, val)
+        env.set(list[1], val)
         return val
-      when "do"
+      when :"do"
         list[1..-2].each { |x| eval_ast(x, env) }
         ast = list[-1]
         next
-      when "try*"
+      when :"try*"
         begin
           return eval_ast(list[1], env)
         rescue => e
-          if list[2] && list[2].type == :list && list[2].val[0] && list[2].val[0].type == :symbol && list[2].val[0].val == "catch*"
-            name = list[2].val[1].val
+          if list[2] && list[2].type == :list && list[2][0] && list[2][0].type == :symbol && list[2][0] == "catch*"
+            name = list[2][1]
             exp = 
               if e.is_a? MalException
-                Mal.new(:exception, e.val)
+                Mal.new(:exception, e)
               else
                 Mal.new(:exception, Mal.new(:string, e.message))
               end
-            ast = list[2].val[2]
+            ast = list[2][2]
             env = Env.new({}, env, [name], [exp])
             next
           else
             raise
           end
         end
-      when "quote"
+      when :"quote"
         return list[1]
-      when "quasiquote"
+      when :"quasiquote"
         ast = quasiquote(list[1])
         next
-      when "if"
+      when :"if"
         cond = eval_ast(list[1], env)
-        if cond.val != nil && cond.val != false
+        if cond != nil && cond != false
           ast = list[2]
           next
         else
@@ -145,36 +145,36 @@ def _eval(ast, env)
             return Mal.new(:nil, nil)
           end
         end
-      when "fn*"
-        old_names = arg_names = list[1].val.map { |x| x.val }
+      when :"fn*"
+        old_names = arg_names = list[1].map { |x| x }
         arg_names = more_names(arg_names)
-        proc = Proc.new do |*args|
+        func = MalFunction.new(list[2], old_names, env) do |*args|
           args = more_args(old_names, args)
           new_env = Env.new({}, env, arg_names, args)
           _eval(list[2], new_env)
         end
-        return MalFunction.new(proc, list[2], old_names, env)
-      when "let*"
+        return func
+      when :"let*"
         new_env = Env.new({}, env)
-        list[1].val.each_slice(2) do |x|
+        list[1].each_slice(2) do |x|
           key = x[0]
           val = _eval(x[1], new_env)
-          new_env.set(key.val, val)
+          new_env.set(key, val)
         end
         ast, env = list[2], new_env
         next
-      when "macroexpand"
+      when :"macroexpand"
         return macroexpand(list[1], env)
       else
         arr = list.map { |x| eval_ast(x, env) }
         func = arr[0]
-        raise 'call on non function' unless func && func.type == :function
+        raise 'call on non function' unless func && func.is_a?(MalFunction)
         if func.ast
           ast = func.ast
           env = Env.new({}, func.env, more_names(func.params), more_args(func.params, arr.drop(1)))
           next
         else
-          return func.val.call(*arr.drop(1))
+          return func.call(*arr.drop(1))
         end
       end
     end
@@ -204,8 +204,8 @@ def _repl(str)
 end
 
 # puts ARGV
-NS.set('eval', func { |ast| _eval(ast, NS) })
-NS.set('*ARGV*', Mal.new(:list, ARGV.map { |x| Mal.new(:string, x) }))
+NS.set(:'eval', func { |ast| _eval(ast, NS) })
+NS.set(:'*ARGV*', MalList.new(ARGV))
 
 _rep "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \")\")))))"
 _rep "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))"

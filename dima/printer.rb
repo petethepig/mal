@@ -1,32 +1,32 @@
 def pr_str(mal, print_readably = false)
-  case mal.type
-  when :function
+  case mal
+  when MalFunction
     '#<function>'
-  when :number
-    mal.val.to_s
-  when :nil
+  when Numeric
+    mal.to_s
+  when NilClass
     'nil'
-  when :true, :false
-    mal.val.to_s
-  when :symbol
-    mal.val.to_s
-  when :keyword
-    mal.val.to_s
-  when :exception
+  when TrueClass, FalseClass
+    mal.to_s
+  when Symbol
+    mal.to_s
+  when MalException
     pr_str(mal.val, print_readably)
-  when :map
-    str = mal.val.to_a.map {|a, b| [pr_str(b[0], print_readably), pr_str(b[1], print_readably)]}.flatten.join(" ")
+  when MalMap
+    str = mal.to_a.map {|a, b| [pr_str(a, print_readably), pr_str(b, print_readably)]}.flatten.join(" ")
     "{" + str + "}"
-  when :string
-    if print_readably
+  when String
+    if mal[0] == "\u029e"
+      ':' + mal[1..-1]
+    elsif print_readably
       # '"' + mal.val.gsub("\"", '\"').gsub("\n", '\n') + '"'
-      mal.val.inspect
+      mal.inspect
     else
-      mal.val
+      mal
     end
-  when :list
-    "(" + mal.val.map { |x| pr_str(x, print_readably) }.join(" ") + ")"
-  when :vector
-    "[" + mal.val.map { |x| pr_str(x, print_readably) }.join(" ") + "]"
+  when MalList
+    "(" + mal.map { |x| pr_str(x, print_readably) }.join(" ") + ")"
+  when MalVector
+    "[" + mal.map { |x| pr_str(x, print_readably) }.join(" ") + "]"
   end
 end
