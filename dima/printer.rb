@@ -30,5 +30,7 @@ def pr_str(mal, print_readably = false)
     "(" + mal.map { |x| pr_str(x, print_readably) }.join(" ") + ")"
   when MalVector
     "[" + mal.map { |x| pr_str(x, print_readably) }.join(" ") + "]"
+  else
+    "unknown: #{mal}"
   end
 end

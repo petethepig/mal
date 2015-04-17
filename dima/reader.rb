@@ -45,16 +45,17 @@ def read_list(reader, start = '(', endd = ')', type=MalList)
 end
 
 def read_map(reader)
-  reader.next
-  arr = [:'hash-map']
-  while (token = reader.peek) != '}'
-    if token.nil?
-      fail "expected '}', got EOF"
-    end
-    arr << read_form(reader)
-  end
-  reader.next
-  MalList.new(arr)
+  # reader.next
+  # arr = [:'hash-map']
+  # while (token = reader.peek) != '}'
+  #   if token.nil?
+  #     fail "expected '}', got EOF"
+  #   end
+  #   arr << read_form(reader)
+  # end
+  # reader.next
+  # MalList.new(arr)
+  MalMap[*read_list(reader, '{', '}', Array)]
 end
 
 def read_atom(reader)
@@ -85,16 +86,16 @@ def read_form(reader)
   case token[0]
   when "'"
     reader.next
-    [:quote, read_form(reader)]
+    MalList.new([:quote, read_form(reader)])
   when "`"
     reader.next
-    [:quasiquote, read_form(reader)]
+    MalList.new([:quasiquote, read_form(reader)])
   when "~"
     reader.next
     if token[1] == '@'
-      [:'splice-unquote', read_form(reader)]
+      MalList.new([:'splice-unquote', read_form(reader)])
     else
-      [:unquote, read_form(reader)]
+      MalList.new([:unquote, read_form(reader)])
     end
   when '@'
     reader.next

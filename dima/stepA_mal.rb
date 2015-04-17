@@ -74,9 +74,9 @@ end
 def quasiquote(ast)
   if !is_pair(ast)
     MalList.new([:quote, ast])
-  elsif ast[0].type == :symbol && ast[0] == :unquote
+  elsif ast[0] == :unquote
     ast[1]
-  elsif is_pair(ast[0]) && ast[0][0].type == :symbol && ast[0][0] == :'splice-unquote'
+  elsif is_pair(ast[0]) && ast[0][0] == :'splice-unquote'
     MalList.new([:concat, ast[0][1], quasiquote(MalList.new(ast.drop(1)))])
   else
     MalList.new([:cons, quasiquote(ast[0]), quasiquote(MalList.new(ast.drop(1)))])
@@ -85,14 +85,16 @@ end
 
 def _eval(ast, env)
   while true
-    if !ast.is_a?(MalList)
+    if ast.is_a?(MalMap)
+      return MalMap[ast.to_a.map {|a,b| [eval_ast(a, env), eval_ast(b, env)] }]
+    elsif ast.is_a?(MalVector)
+      return MalVector.new(ast.map { |x| eval_ast(x, env) })
+    elsif !ast.is_a?(MalList)
       return eval_ast(ast, env)
     else
       # macro stuff
       ast = macroexpand(ast, env)
       return ast unless ast.is_a?(Array)
-      #
-
       list = ast
       case list.first
       when :"def!"
@@ -112,13 +114,13 @@ def _eval(ast, env)
         begin
           return eval_ast(list[1], env)
         rescue => e
-          if list[2] && list[2].type == :list && list[2][0] && list[2][0].type == :symbol && list[2][0] == "catch*"
+          if list[2] && list[2].is_a?(MalList) && list[2][0] && list[2][0] == :"catch*"
             name = list[2][1]
-            exp = 
+            exp =
               if e.is_a? MalException
-                Mal.new(:exception, e)
+                MalException.new(e)
               else
-                Mal.new(:exception, Mal.new(:string, e.message))
+                MalException.new(e.message + e.backtrace.join(" "))
               end
             ast = list[2][2]
             env = Env.new({}, env, [name], [exp])
@@ -186,7 +188,7 @@ def _print(mal)
 end
 
 def _rep(str)
-  begin 
+  begin
     _print(_eval(_read(str), NS))
   rescue EmptyError => e
     nil

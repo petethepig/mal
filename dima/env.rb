@@ -23,7 +23,7 @@ class Env
 
   def get(k)
     if (a = find(k))
-      a[k] || Mal.new(:nil, nil)
+      a[k]
     else
       fail("'#{k}' not found")
     end
