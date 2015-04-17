@@ -132,7 +132,7 @@ vb_RUNSTEP =      mono ../$(2) --raw $(3)
 guile_RUNSTEP =   guile -L ../guile ../$(2) $(3)
 
 # Extra options to pass to runtest.py
-mal_TEST_OPTS = --start-timeout 60 --test-timeout 120
+mal_TEST_OPTS = --start-timeout 4 --test-timeout 4
 
 
 # Derived lists

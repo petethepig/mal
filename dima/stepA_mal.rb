@@ -158,10 +158,8 @@ def _eval(ast, env)
         return func
       when :"let*"
         new_env = Env.new({}, env)
-        list[1].each_slice(2) do |x|
-          key = x[0]
-          val = _eval(x[1], new_env)
-          new_env.set(key, val)
+        list[1].each_slice(2) do |key, val|
+          new_env.set(key, _eval(val, new_env))
         end
         ast, env = list[2], new_env
         next
@@ -171,7 +169,7 @@ def _eval(ast, env)
         arr = list.map { |x| eval_ast(x, env) }
         func = arr[0]
         raise 'call on non function' unless func && func.is_a?(MalFunction)
-        if false && func.ast
+        if func.ast
           ast = func.ast
           env = Env.new({}, func.env, more_names(func.params), more_args(func.params, arr.drop(1)))
           next

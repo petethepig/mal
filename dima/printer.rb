@@ -1,7 +1,7 @@
 def pr_str(mal, print_readably = false)
   case mal
   when MalFunction
-    '#<function>'
+    "#<function #{mal}>"
   when Numeric
     mal.to_s
   when NilClass
