@@ -17,7 +17,7 @@ def eval_ast(ast, env)
   case ast
   when Symbol
     env.get(ast)
-  when MalList
+  when MalList, MalVector, MalMap
     _eval(ast, env)
   else
     ast
@@ -25,7 +25,7 @@ def eval_ast(ast, env)
 end
 
 def is_macro_call(ast, env)
-  if ast.is_a?(MalList)
+  if ast.is_a?(Array)
     if (first = ast.first) && first.is_a?(Symbol)
       if env.find(first) && (func = env.get(first)) && func.is_a?(MalFunction) && func.is_macro
         return true
@@ -44,7 +44,7 @@ def macroexpand(ast, env)
 end
 
 def more_names(names)
-  if more_index = names.index('&')
+  if more_index = names.index(:&)
     if more_index == 0
       [names[more_index + 1]]
     else
@@ -52,19 +52,19 @@ def more_names(names)
     end
   else
     names
-  end
+  end #.tap {|x| puts "names: #{x.inspect}"}
 end
 
 def more_args(names, args)
-  if more_index = names.index('&')
+  if more_index = names.index(:&)
     if more_index == 0
-      MalList.new([args])
+      MalList.new([MalList.new(args)])
     else
       MalList.new(args[0..more_index - 1] + [args.drop(more_index)])
     end
   else
-    args
-  end
+    MalList.new(args)
+  end #.tap {|x| puts "args: #{x.inspect}"}
 end
 
 def is_pair(ast)
@@ -144,7 +144,7 @@ def _eval(ast, env)
             ast = list[3]
             next
           else
-            return Mal.new(:nil, nil)
+            return nil
           end
         end
       when :"fn*"
@@ -171,7 +171,7 @@ def _eval(ast, env)
         arr = list.map { |x| eval_ast(x, env) }
         func = arr[0]
         raise 'call on non function' unless func && func.is_a?(MalFunction)
-        if func.ast
+        if false && func.ast
           ast = func.ast
           env = Env.new({}, func.env, more_names(func.params), more_args(func.params, arr.drop(1)))
           next

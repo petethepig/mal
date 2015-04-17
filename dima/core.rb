@@ -18,8 +18,8 @@ def equality(a, b)
       if !equality(a[i], b[i])
         return false
       end
-      true
     end
+    true
   else
     a == b
   end
