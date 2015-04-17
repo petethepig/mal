@@ -15,6 +15,10 @@ end
 
 def eval_ast(ast, env)
   case ast
+  when MalMap
+    MalMap[ast.to_a.map {|a,b| [_eval(a, env), _eval(b, env)] }]
+  when MalVector
+    MalVector.new(ast.map { |x| _eval(x, env) })
   when Symbol
     env.get(ast)
   when MalList, MalVector, MalMap
@@ -85,11 +89,7 @@ end
 
 def _eval(ast, env)
   while true
-    if ast.is_a?(MalMap)
-      return MalMap[ast.to_a.map {|a,b| [eval_ast(a, env), eval_ast(b, env)] }]
-    elsif ast.is_a?(MalVector)
-      return MalVector.new(ast.map { |x| eval_ast(x, env) })
-    elsif !ast.is_a?(MalList)
+    if !ast.is_a?(MalList)
       return eval_ast(ast, env)
     else
       # macro stuff
@@ -120,7 +120,7 @@ def _eval(ast, env)
               if e.is_a? MalException
                 MalException.new(e)
               else
-                MalException.new(e.message + e.backtrace.join(" "))
+                MalException.new(e.message) # + e.backtrace.join(" "))
               end
             ast = list[2][2]
             env = Env.new({}, env, [name], [exp])
