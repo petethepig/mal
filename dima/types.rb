@@ -1,10 +1,3 @@
-class Mal
-  attr_reader :val
-  def initialize(type, val)
-    @type, @val = type, val
-  end
-end
-
 class MalList < Array
   attr_accessor :meta
 end
@@ -20,13 +13,12 @@ end
 class MalFunction < Proc
   attr_reader :val
   attr_accessor :ast
-  attr_accessor :mame
+  attr_accessor :name
   attr_accessor :params
   attr_accessor :env
   attr_accessor :is_macro
   attr_accessor :meta
   def initialize(ast=nil, params=nil, env=nil, is_macro=false, &block)
-    @type = :function
     @val = self
     @ast, @params, @env, @is_macro = ast, params, env, is_macro
     super(&block)
@@ -37,6 +29,14 @@ class MalException < StandardError
   attr_reader :val
   attr_accessor :meta
   def initialize(val)
-    @type, @val = :exception, val
+    @val = val
+  end
+end
+
+class MalAtom
+  attr_accessor :val
+  attr_accessor :meta
+  def initialize(val)
+    @val = val
   end
 end

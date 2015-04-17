@@ -24,6 +24,8 @@ def pr_str(mal, print_readably = false)
     else
       mal
     end
+  when MalAtom
+    "(atom #{pr_str(mal.val, print_readably)})"
   when MalList
     "(" + mal.map { |x| pr_str(x, print_readably) }.join(" ") + ")"
   when MalVector

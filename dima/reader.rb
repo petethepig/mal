@@ -46,7 +46,7 @@ end
 
 def read_map(reader)
   reader.next
-  arr = []
+  arr = [:'hash-map']
   while (token = reader.peek) != '}'
     if token.nil?
       fail "expected '}', got EOF"
@@ -54,7 +54,7 @@ def read_map(reader)
     arr << read_form(reader)
   end
   reader.next
-  MalMap[arr.each_slice(2).map { |a, b| [a, b] }]
+  MalList.new(arr)
 end
 
 def read_atom(reader)
@@ -96,6 +96,14 @@ def read_form(reader)
     else
       [:unquote, read_form(reader)]
     end
+  when '@'
+    reader.next
+    MalList.new([:'deref', read_form(reader)])
+  when '^'
+    reader.next
+    meta = read_form(reader)
+    val = read_form(reader)
+    MalList.new([:'with-meta', val, meta])
   when '('
     read_list(reader)
   when '['
