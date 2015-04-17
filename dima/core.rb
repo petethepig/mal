@@ -79,4 +79,5 @@ NS = Env.new({
   :swap! => func { |x, func, *args| x.val = func.call(*([x.val] + args)) },
   :'with-meta' => func { |x, meta| x = x.clone; x.meta = meta; x },
   :'meta' => func { |x| x.meta },
+  :'conj' => func { |list, *args| list.is_a?(MalList) ? MalList.new(args.reverse + list) : MalVector.new(list + args) },
 })

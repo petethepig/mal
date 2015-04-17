@@ -17,7 +17,7 @@ def eval_ast(ast, env)
   case ast
   when Symbol
     env.get(ast)
-  when Array
+  when MalList
     _eval(ast, env)
   else
     ast
@@ -25,7 +25,7 @@ def eval_ast(ast, env)
 end
 
 def is_macro_call(ast, env)
-  if ast.is_a?(Array)
+  if ast.is_a?(MalList)
     if (first = ast.first) && first.is_a?(Symbol)
       if env.find(first) && (func = env.get(first)) && func.is_a?(MalFunction) && func.is_macro
         return true
@@ -85,7 +85,7 @@ end
 
 def _eval(ast, env)
   while true
-    if !ast.is_a?(Array)
+    if !ast.is_a?(MalList)
       return eval_ast(ast, env)
     else
       # macro stuff
@@ -210,6 +210,7 @@ NS.set(:'*ARGV*', MalList.new(ARGV))
 _rep "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \")\")))))"
 _rep "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))"
 _rep "(defmacro! or (fn* (& xs) (if (empty? xs) nil (if (= 1 (count xs)) (first xs) `(let* (or_FIXME ~(first xs)) (if or_FIXME or_FIXME (or ~@(rest xs))))))))"
+_rep "(def! *host-language* \"dima\")"
 # _rep "(load-file \"core.mal\")"
 _rep "(map load-file *ARGV*)"
 
