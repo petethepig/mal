@@ -68,7 +68,7 @@ def more_args(names, args)
 end
 
 def is_pair(ast)
-  ast.is_a?(MalList) && ast.count > 0
+  ast.is_a?(Array) && ast.count > 0
 end
 
 def quasiquote(ast)
